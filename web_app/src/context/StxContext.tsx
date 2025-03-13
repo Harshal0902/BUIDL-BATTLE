@@ -25,9 +25,8 @@ export const STXWalletProvider: React.FC<React.PropsWithChildren<object>> = ({ c
             const paymentAddressItem = response.addresses.find(
                 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
                 // @ts-ignore
-                (address) => address.purpose === 'payment'
+                (address) => address.purpose === 'stacks'
             );
-            console.log(response);
             setSTXAddress(paymentAddressItem?.address);
             toast.success('Wallet connected successfully!')
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -48,15 +47,15 @@ export const STXWalletProvider: React.FC<React.PropsWithChildren<object>> = ({ c
     };
 
     return (
-        <STXWalletContext.Provider value= {{
-        STXAddress,
+        <STXWalletContext.Provider value={{
+            STXAddress,
             isSTXConnected,
             connectSTXWallet,
             disconnectSTXWallet
-    }
-}>
-    { children }
-    </STXWalletContext.Provider>
+        }
+        }>
+            {children}
+        </STXWalletContext.Provider>
     );
 };
 

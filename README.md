@@ -1,14 +1,15 @@
-# APP NAME
+# Velance
 
 ## 💡 The Problem and Solution
 
 ## ⚙️ How we built it
 
 - **Stacks**: Primary blockchain
-- **Next.js**: For frontend development
 - **@stacks/connect**: SDK for development on Stacks
 - **Clarity**: For writing smart contracts
 - **SIP-009**: NFT standard on Stacks Testnet
+- **Next.js**: For frontend
+- **Node Js**: For backend
 
 ## 🔒 Use of Stacks
 
@@ -18,4 +19,4 @@
 
 ## 📖 What we learned
 
-## 🚀 What's next for APP NAME
+## 🚀 What's next for Velance

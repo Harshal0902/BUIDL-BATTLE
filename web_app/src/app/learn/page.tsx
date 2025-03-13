@@ -1,21 +1,25 @@
 "use client"
 
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { useTypingEffect } from '@/components/useTypingEffect'
+import LearnMenu from '@/components/LearnMenu'
+import { useSTXWallet } from '@/context/StxContext'
+import { request } from 'sats-connect'
+import { request as request2 } from '@stacks/connect'
+import { toast } from 'sonner'
+import { HeartHandshake } from 'lucide-react'
 
 export default function Page() {
     const [position, setPosition] = useState({ x: 0, y: 0 });
     const [direction, setDirection] = useState(0);
     const [phase, setPhase] = useState(0);
-    const velocity = useRef({ x: 0, y: 0 });
     const [showCard, setShowCard] = useState(true);
     const [buttonEnabled, setButtonEnabled] = useState(false);
-    const [usedKeys, setUsedKeys] = useState(new Set<string>());
-    const [showCongrats, setShowCongrats] = useState(false);
+    const [showHeartCard, setShowHeartCard] = useState(false);
 
-    const speed = 150;
+    const { isSTXConnected, connectSTXWallet, disconnectSTXWallet } = useSTXWallet();
 
     const blockedCells = new Set([
         '0-0', '1-0', '1-1', '0-1', '0-2', '1-2', '0-3', '1-3', '0-4', '1-4', '2-4',
@@ -35,7 +39,7 @@ export default function Page() {
         return blockedCells.has(`${cellX}-${cellY}`);
     };
 
-    const welcomeText = 'Welcome to APP NAME! Learn how to interact with the app here!';
+    const welcomeText = '🎉 Welcome to Velance! Learn how to interact with the app here. Use your keyboard arrow keys to move the player. You can also use A, W, S, D to control player movements.';
     const { typedMyService } = useTypingEffect([welcomeText]);
 
     useEffect(() => {
@@ -52,35 +56,48 @@ export default function Page() {
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
+            if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'a', 'A', 'w', 'W', 's', 'S', 'd', 'D'].includes(e.key)) {
+                return;
+            }
+
             const step = 10;
             let newX = position.x;
             let newY = position.y;
-
-            setUsedKeys(prev => new Set(prev).add(e.key));
+            let newDirection = direction;
+            let newPhase = phase;
 
             switch (e.key) {
                 case 'ArrowLeft':
+                case 'a':
+                case 'A':
                     newX = position.x - step;
-                    setDirection(1);
-                    velocity.current.x = -speed;
+                    newDirection = 1;
                     break;
                 case 'ArrowRight':
+                case 'd':
+                case 'D':
                     newX = position.x + step;
-                    setDirection(2);
+                    newDirection = 2;
                     break;
                 case 'ArrowUp':
+                case 'w':
+                case 'W':
                     newY = position.y - step;
-                    setDirection(3);
+                    newDirection = 3;
                     break;
                 case 'ArrowDown':
+                case 's':
+                case 'S':
                     newY = position.y + step;
-                    setDirection(0);
+                    newDirection = 0;
                     break;
             }
 
             if (!isCellBlocked(newX, newY)) {
+                newPhase = (phase + 1) % 11;
+                setDirection(newDirection);
+                setPhase(newPhase);
                 setPosition({ x: newX, y: newY });
-                setPhase(prev => (prev + 1) % 11);
             }
         };
 
@@ -89,13 +106,49 @@ export default function Page() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [position]);
 
-    // Check if all arrow keys have been used
-    useEffect(() => {
-        if (usedKeys.has('ArrowLeft') && usedKeys.has('ArrowRight') &&
-            usedKeys.has('ArrowUp') && usedKeys.has('ArrowDown')) {
-            setShowCongrats(true);
+    const signMessage = async () => {
+        try {
+            const message = 'This is a message';
+            const response = await request('stx_signMessage', {
+                message: message,
+                publicKey: 'testing',
+                parameterFormatVersion: 1
+            });
+            if (response.status === 'success') {
+                toast.success('Signed message successfully!');
+            } else {
+                toast.error('Error signing message');
+            }
+            return response;
+        } catch (error) {
+            if (error instanceof Error) {
+                toast.error(`Error signing message: ${error.message}`);
+            } else {
+                toast.error('Error signing message');
+            }
         }
-    }, [usedKeys]);
+    }
+
+    const sendSTX = async () => {
+        const recipient = 'STXDTNZM0KRJZ7Q7ZPAW18P5Q6SGPVGJTV7V5NBX';
+        const amount = '1000';
+
+        try {
+            const response = await request2('stx_transferStx', {
+                amount: amount,
+                recipient: recipient,
+                network: 'testnet',
+                // memo: 'A demo STX transaction on Stacks testnet'
+            });
+            if ('txid' in response) {
+                toast.success('Transfer STX was successful!')
+            } else {
+                toast.error('Error sending transaction');
+            }
+        } catch {
+            toast.error('Error sending transaction');
+        }
+    }
 
     // const handleCellClick = (x: number, y: number) => {
     //     console.log(`Clicked cell: (${x}, ${y})`);
@@ -136,9 +189,35 @@ export default function Page() {
         setShowCard(false);
     };
 
+    const handleHeartClick = () => {
+        setShowHeartCard(true);
+    };
+
+    const handleCloseHeartCard = () => {
+        setShowHeartCard(false);
+    };
+
     return (
         <div className='relative h-screen w-screen overflow-hidden'>
             <div className='absolute inset-0 z-0 bg-cover bg-center' style={{ backgroundImage: "url('/learn/learn.png')" }}></div>
+            <div className='absolute top-4 right-4 z-10'>
+                <LearnMenu />
+            </div>
+            <div className='absolute top-20 right-4 flex flex-col space-y-4'>
+                {isSTXConnected ?
+                    <Button variant='destructive' onClick={disconnectSTXWallet}>Disconnect Wallet</Button>
+                    :
+                    <Button className='text-white tracking-wider text-center' onClick={connectSTXWallet}>
+                        Connect Wallet
+                    </Button>
+                }
+                <Button className='text-white tracking-wider text-center' onClick={signMessage}>
+                    Sign Message
+                </Button>
+                <Button className='text-white tracking-wider text-center' onClick={sendSTX}>
+                    Send Transaction
+                </Button>
+            </div>
             {/* {renderGrid()} */}
             <div
                 style={{
@@ -155,12 +234,12 @@ export default function Page() {
             />
             {showCard && (
                 <div className='absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10'>
-                    <Card className='w-[90vw] md:w-[550px] md:px-6 bg-opacity-50 backdrop-blur-lg font-readex'>
+                    <Card className='w-[90vw] md:w-[550px] md:px-6 bg-opacity-50 backdrop-blur-lg'>
                         <CardHeader>
-                            <CardTitle className='text-4xl md:text-5xl text-center tracking-wider'>APP NAME</CardTitle>
+                            <CardTitle className='text-4xl md:text-5xl text-center tracking-wider'>Velance</CardTitle>
                         </CardHeader>
                         <CardContent className='flex flex-col space-y-3'>
-                            <div className='tracking-wider'>{typedMyService}</div>
+                            <div className='tracking-wider text-center'>{typedMyService}</div>
                             <Button
                                 onClick={handleGetStarted}
                                 disabled={!buttonEnabled}
@@ -172,26 +251,49 @@ export default function Page() {
                 </div>
             )}
 
-            {!showCard && !showCongrats && (
-                <div className='absolute bottom-4 right-4 z-10'>
-                    <Card className='w-[300px] bg-opacity-50 backdrop-blur-lg font-readex'>
-                        <CardContent className='p-4'>
-                            <div className='text-sm tracking-wider'>
-                                Use your keyboard arrow keys to move player
-                            </div>
-                        </CardContent>
-                    </Card>
-                </div>
-            )}
+            <div className='absolute bottom-12 left-6 backdrop-blur-xl'>
+                <HeartHandshake
+                    className='h-10 w-10 cursor-pointer hover:scale-110 transition-transform'
+                    onClick={handleHeartClick}
+                />
+            </div>
 
-            {showCongrats && (
-                <div className='absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10'>
-                    <Card className='w-[90vw] md:w-[550px] md:px-6 bg-opacity-50 backdrop-blur-lg font-readex'>
-                        <CardContent className='p-6'>
-                            <div className='text-lg tracking-wider text-center'>
-                                Congratulations on taking your first steps!<br />
-                                Now, to get familiar with the platform, let&apos;s start with some basics.
+            {showHeartCard && (
+                <div className='absolute bottom-24 left-6 z-10'>
+                    <Card className='w-[300px] md:w-[400px] bg-opacity-50 backdrop-blur-lg tracking-wider'>
+                        <CardHeader>
+                            <CardTitle className='text-xl tracking-wider'>New user?</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className='space-y-2'>
+                                <p>Are you new to Stacks or blockchain? No worries-we&apos;ve got you covered! Follow the steps below to familiarize yourself with the Stacks blockchain.</p>
+                                <div>
+                                    <p>1. Connect Your Wallet</p>
+                                    <ul className='pl-4 list-disc'>
+                                        <li>Click the first button at the top-right corner to connect or disconnect your wallet.</li>
+                                    </ul>
+                                </div>
+                                <div>
+                                    <p>2. Sign a Message</p>
+                                    <ul className='pl-4 list-disc'>
+                                        <li>Click the second button to sign a message.</li>
+                                        <li>This can be used to authenticate ownership of an address or to signal a decision (e.g., agreeing to Terms of Service).</li>
+                                    </ul>
+                                </div>
+                                <div>
+                                    <p>3. Send a Transaction</p>
+                                    <ul className='pl-4 list-disc'>
+                                        <li>Click the second button to sign a message.</li>
+                                        <li>Click the third button to send a transaction (e.g., transferring STX from your account to another recipient).</li>
+                                    </ul>
+                                </div>
                             </div>
+                            <Button
+                                className='mt-4 w-full'
+                                onClick={handleCloseHeartCard}
+                            >
+                                Close
+                            </Button>
                         </CardContent>
                     </Card>
                 </div>
