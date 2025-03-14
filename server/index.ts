@@ -8,7 +8,7 @@ const app = express();
 const server = createServer(app);
 const io = new Server(server, {
     cors: {
-        origin: process.env.FRONTEND_DEPLOYMENT || 'http://localhost:3000',
+        origin: process.env.FRONTEND_DEPLOYMENT,
         methods: ['GET', 'POST'],
         credentials: true
     }
