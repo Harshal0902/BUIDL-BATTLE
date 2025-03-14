@@ -1,17 +1,20 @@
 import express from 'express'
 import { createServer } from 'http'
 import { Server } from 'socket.io'
+import dotenv from 'dotenv'
 
+dotenv.config();
 const app = express();
 const server = createServer(app);
 const io = new Server(server, {
     cors: {
-        origin: 'http://localhost:3000',
-        methods: ['GET', 'POST']
+        origin: process.env.FRONTEND_DEPLOYMENT || 'http://localhost:3000',
+        methods: ['GET', 'POST'],
+        credentials: true
     }
 });
 
-const PORT = 3001;
+const PORT = 8080;
 
 const players: { [key: string]: { position: { x: number, y: number }, direction: number, phase: number } } = {};
 
@@ -38,10 +41,9 @@ io.on('connection', (socket) => {
         });
     });
 
-    // Handle chat messages
     socket.on('send-chat', (message) => {
         socket.broadcast.emit('chat-message', {
-            sender: socket.id.slice(0, 6), // Use first 6 chars of socket ID as sender name
+            sender: socket.id.slice(0, 6),
             message,
             isMine: false
         });

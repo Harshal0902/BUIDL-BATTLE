@@ -3,6 +3,10 @@
 import React, { useState, useEffect } from 'react'
 import { io, type Socket } from 'socket.io-client'
 import MarketMenu from '@/components/MarketMenu'
+import { env } from '@/env'
+import { useSTXWallet } from '@/context/StxContext'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
 
 export default function Page() {
     const [position, setPosition] = useState({ x: 0, y: 0 });
@@ -12,6 +16,8 @@ export default function Page() {
     const [otherPlayers, setOtherPlayers] = useState<Record<string, { position: { x: number, y: number }, direction: number, phase: number }>>({});
     const boundaryThreshold = 64;
     const [socket, setSocket] = useState<Socket | null>(null);
+
+    const { isSTXConnected, connectSTXWallet } = useSTXWallet();
 
     const blockedCells = new Set([
         '0-0',
@@ -33,7 +39,10 @@ export default function Page() {
     };
 
     useEffect(() => {
-        const newSocket = io('http://localhost:3001');
+        const newSocket = io(env.NEXT_PUBLIC_BACKEND_DEPLOYMENT, {
+            withCredentials: true,
+            transports: ['websocket', 'polling']
+        });
         setSocket(newSocket);
 
         newSocket.on('players-update', (players: Record<string, { position: { x: number, y: number }, direction: number, phase: number }>) => {
@@ -164,51 +173,74 @@ export default function Page() {
     return (
         <div className='relative h-screen w-screen overflow-hidden'>
             <div className='absolute top-4 right-4 z-10'>
-                <MarketMenu />
+                <MarketMenu
+                    position={position}
+                    mapOffset={mapOffset}
+                    otherPlayers={otherPlayers}
+                />
             </div>
             <div
                 className='absolute inset-0 z-0 bg-cover bg-center'
                 style={{
                     backgroundImage: "url('/market/market.png')",
-                    transform: ` translate(${mapOffset.x}px, ${mapOffset.y}px) scale(18)`,
+                    transform: `translate(${mapOffset.x}px, ${mapOffset.y}px) scale(18)`,
                     backgroundPosition: 'center',
                     width: '100%',
                     height: '100%',
                     backgroundSize: '50% 50%'
                 }}
             ></div>
-            <div
-                style={{
-                    position: 'absolute',
-                    left: position.x,
-                    top: position.y,
-                    width: '95px',
-                    height: '158px',
-                    backgroundImage: 'url(/user_movement.png)',
-                    backgroundPosition: `-${phase * 95}px -${direction * 158}px`,
-                    transition: 'left 0.1s, top 0.1s',
-                    zIndex: 1
-                }}
-            />
-            {Object.entries(otherPlayers).map(([id, player]) => {
-                if (player.position.x === 0 && player.position.y === 0) return null;
-                return (
+
+            {isSTXConnected ? (
+                <>
                     <div
-                        key={id}
                         style={{
                             position: 'absolute',
-                            left: player.position.x,
-                            top: player.position.y,
+                            left: position.x,
+                            top: position.y,
                             width: '95px',
                             height: '158px',
                             backgroundImage: 'url(/user_movement.png)',
-                            backgroundPosition: `-${player.phase * 95}px -${player.direction * 158}px`,
-                            transition: 'left 0.1s linear, top 0.1s linear',
+                            backgroundPosition: `-${phase * 95}px -${direction * 158}px`,
+                            transition: 'left 0.1s, top 0.1s',
                             zIndex: 1
                         }}
                     />
-                );
-            })}
-        </div>
+                    {
+                        Object.entries(otherPlayers).map(([id, player]) => {
+                            if (player.position.x === 0 && player.position.y === 0) return null;
+                            return (
+                                <div
+                                    key={id}
+                                    style={{
+                                        position: 'absolute',
+                                        left: player.position.x + mapOffset.x,
+                                        top: player.position.y + mapOffset.y,
+                                        width: '95px',
+                                        height: '158px',
+                                        backgroundImage: 'url(/user_movement.png)',
+                                        backgroundPosition: `-${player.phase * 95}px -${player.direction * 158}px`,
+                                        transition: 'left 0.1s linear, top 0.1s linear',
+                                        zIndex: 1
+                                    }}
+                                />
+                            );
+                        })
+                    }
+                </>
+            ) : (
+                <div className='absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10'>
+                    <Card className='w-[90vw] md:w-[550px] md:px-6 bg-opacity-50 backdrop-blur-lg font-readex'>
+                        <CardHeader>
+                            <CardTitle className='text-4xl md:text-5xl text-center tracking-wider'>Velance</CardTitle>
+                        </CardHeader>
+                        <CardContent className='flex flex-col space-y-3 text-2xl text-center'>
+                            Wallet Not Connected!
+                            <Button onClick={connectSTXWallet}>Connect wallet</Button>
+                        </CardContent>
+                    </Card>
+                </div>
+            )}
+        </div >
     )
 }
