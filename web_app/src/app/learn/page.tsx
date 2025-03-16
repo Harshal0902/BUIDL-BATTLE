@@ -150,41 +150,6 @@ export default function Page() {
         }
     }
 
-    // const handleCellClick = (x: number, y: number) => {
-    //     console.log(`Clicked cell: (${x}, ${y})`);
-    // };
-
-    // const renderGrid = () => {
-    //     if (typeof window === 'undefined') return null;
-
-    //     const grid = [];
-    //     const cellSize = 100;
-    //     const columns = Math.ceil(window.innerWidth / cellSize);
-    //     const rows = Math.ceil(window.innerHeight / cellSize);
-
-    //     for (let y = 0; y < rows; y++) {
-    //         for (let x = 0; x < columns; x++) {
-    //             grid.push(
-    //                 <div
-    //                     key={`${x}-${y}`}
-    //                     style={{
-    //                         position: 'absolute',
-    //                         left: x * cellSize,
-    //                         top: y * cellSize,
-    //                         width: cellSize,
-    //                         height: cellSize,
-    //                         border: '1px solid rgba(255,255,255,0.2)',
-    //                         boxSizing: 'border-box',
-    //                         cursor: 'pointer'
-    //                     }}
-    //                     onClick={() => handleCellClick(x, y)}
-    //                 />
-    //             );
-    //         }
-    //     }
-    //     return grid;
-    // };
-
     const handleGetStarted = () => {
         setShowCard(false);
     };
