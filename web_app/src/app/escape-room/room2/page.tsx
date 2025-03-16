@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 import Room2Menu from '@/components/Room2Menu'
+import { request } from '@stacks/connect'
 
 const riddles = [
     {
@@ -38,6 +39,7 @@ export default function Page() {
     const [mapOffset, setMapOffset] = useState({ x: 0, y: 0 });
     const [currentRiddleIndex, setCurrentRiddleIndex] = useState(0);
     const [allRiddlesAnswered, setAllRiddlesAnswered] = useState(false);
+    const [claimNFT, setClaimNFT] = useState(false);
     const boundaryThreshold = 64;
 
     const { isSTXConnected, connectSTXWallet } = useSTXWallet();
@@ -73,7 +75,8 @@ export default function Page() {
         const currentRiddle = riddles[currentRiddleIndex];
         // @ts-ignore
         if (currentRiddle.ansBlock.includes(currentCell)) {
-            toast.success('Correct answer!');
+            // @ts-ignore
+            toast.success(`Correct answer! ${currentRiddle.ans}`);
             if (currentRiddleIndex < riddles.length - 1) {
                 setCurrentRiddleIndex(currentRiddleIndex + 1);
             } else {
@@ -200,6 +203,21 @@ export default function Page() {
     //     return grid;
     // };
 
+    const ClaimNFT = async () => {
+        setClaimNFT(true);
+        const response = await request('stx_callContract', {
+            contract: 'STXDTNZM0KRJZ7Q7ZPAW18P5Q6SGPVGJTV7V5NBX.valance-escape-room-nft',
+            functionName: 'claim',
+            network: 'testnet',
+        });
+        if (response.txid) {
+            toast.success('NFT claimed successfully!');
+        } else {
+            toast.error('Failed to claim NFT');
+        }
+        setClaimNFT(false);
+    };
+
     return (
         <div className='relative h-screen w-screen overflow-hidden'>
             <div className='absolute top-4 right-4 z-10'>
@@ -230,7 +248,7 @@ export default function Page() {
                                 </CardHeader>
                                 <CardContent className='flex flex-col items-center justify-center space-y-3 text-2xl text-center'>
                                     You have answered all the riddles! Now you can clain your NFT!
-                                    <Button>Min NFT</Button>
+                                    <Button onClick={ClaimNFT} disabled={claimNFT}>Min NFT</Button>
                                 </CardContent>
                             </Card>
                         </div>

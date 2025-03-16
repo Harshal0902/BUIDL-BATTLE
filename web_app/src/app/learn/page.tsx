@@ -18,6 +18,8 @@ export default function Page() {
     const [showCard, setShowCard] = useState(true);
     const [buttonEnabled, setButtonEnabled] = useState(false);
     const [showHeartCard, setShowHeartCard] = useState(false);
+    const [hasSignedMessage, setHasSignedMessage] = useState(false);
+    const [hasSentSTX, setHasSentSTX] = useState(false);
 
     const { isSTXConnected, connectSTXWallet, disconnectSTXWallet } = useSTXWallet();
 
@@ -116,6 +118,7 @@ export default function Page() {
             });
             if (response.status === 'success') {
                 toast.success('Signed message successfully!');
+                setHasSignedMessage(true);
             } else {
                 toast.error('Error signing message');
             }
@@ -131,6 +134,7 @@ export default function Page() {
 
     const sendSTX = async () => {
         const recipient = 'STXDTNZM0KRJZ7Q7ZPAW18P5Q6SGPVGJTV7V5NBX';
+        // const recipient = 'ST2Q1M6CBJ01CBSB92VZ2HRXANTR13CWVDJAF6XXS';
         const amount = '1000';
 
         try {
@@ -141,7 +145,8 @@ export default function Page() {
                 // memo: 'A demo STX transaction on Stacks testnet'
             });
             if ('txid' in response) {
-                toast.success('Transfer STX was successful!')
+                toast.success('Transfer STX was successful!');
+                setHasSentSTX(true);
             } else {
                 toast.error('Error sending transaction');
             }
@@ -149,6 +154,25 @@ export default function Page() {
             toast.error('Error sending transaction');
         }
     }
+
+    const claimLearnerNFT = async () => {
+        try {
+            const response = await request2('stx_callContract', {
+                contract: 'STXDTNZM0KRJZ7Q7ZPAW18P5Q6SGPVGJTV7V5NBX.valance-learn-nft',
+                functionName: 'claim',
+                network: 'testnet',
+                fee: 300
+            });
+            if (response.txid) {
+                toast.success('Learner NFT claimed successfully!');
+            } else {
+                toast.error('Failed to claim Learner NFT');
+            }
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        } catch (error) {
+            toast.error('Error claiming Learner NFT');
+        }
+    };
 
     const handleGetStarted = () => {
         setShowCard(false);
@@ -182,8 +206,12 @@ export default function Page() {
                 <Button className='text-white tracking-wider text-center' onClick={sendSTX}>
                     Send Transaction
                 </Button>
+                {hasSignedMessage && hasSentSTX && (
+                    <Button className='text-white tracking-wider text-center' onClick={claimLearnerNFT}>
+                        Claim Learner NFT
+                    </Button>
+                )}
             </div>
-            {/* {renderGrid()} */}
             <div
                 style={{
                     position: 'absolute',
@@ -225,12 +253,12 @@ export default function Page() {
 
             {showHeartCard && (
                 <div className='absolute bottom-24 left-6 z-10'>
-                    <Card className='w-[300px] md:w-[400px] bg-opacity-50 backdrop-blur-lg tracking-wider'>
+                    <Card className='w-[300px] md:w-[480px] bg-opacity-50 backdrop-blur-lg tracking-wider'>
                         <CardHeader>
                             <CardTitle className='text-xl tracking-wider'>New user?</CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <div className='space-y-2'>
+                            <div className='space-y-2 text-sm tracking-wider'>
                                 <p>Are you new to Stacks or blockchain? No worries-we&apos;ve got you covered! Follow the steps below to familiarize yourself with the Stacks blockchain.</p>
                                 <div>
                                     <p>1. Connect Your Wallet</p>
@@ -250,6 +278,12 @@ export default function Page() {
                                     <ul className='pl-4 list-disc'>
                                         <li>Click the second button to sign a message.</li>
                                         <li>Click the third button to send a transaction (e.g., transferring STX from your account to another recipient).</li>
+                                    </ul>
+                                </div>
+                                <div>
+                                    <p>4. Earn Your Learn NFT</p>
+                                    <ul className='pl-4 list-disc'>
+                                        <li>After successfully signing a message and sending a transaction, you will be eligible to mint your Learn NFT, a digital collectible that proves your first steps in the Stacks ecosystem.</li>
                                     </ul>
                                 </div>
                             </div>

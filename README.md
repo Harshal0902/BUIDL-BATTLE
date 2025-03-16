@@ -25,6 +25,7 @@ Velance offers a **new way to explore the Stacks ecosystem**, combining learning
 
 - Valance Learn NFT: [STXDTNZM0KRJZ7Q7ZPAW18P5Q6SGPVGJTV7V5NBX.valance-learn-nft](https://explorer.hiro.so/txid/STXDTNZM0KRJZ7Q7ZPAW18P5Q6SGPVGJTV7V5NBX.valance-learn-nft?chain=testnet)
 - Valance Escape Room NFT: [STXDTNZM0KRJZ7Q7ZPAW18P5Q6SGPVGJTV7V5NBX.valance-escape-room-nft](https://explorer.hiro.so/txid/STXDTNZM0KRJZ7Q7ZPAW18P5Q6SGPVGJTV7V5NBX.valance-escape-room-nft?chain=testnet)
+- ValanceMarketplace: [STXDTNZM0KRJZ7Q7ZPAW18P5Q6SGPVGJTV7V5NBX.valance-marketplace](https://explorer.hiro.so/txid/STXDTNZM0KRJZ7Q7ZPAW18P5Q6SGPVGJTV7V5NBX.valance-marketplace?chain=testnet)
 
 ## 📖 What we learned
 - How to create smart contracts on Stacks with Clarity.
